@@ -1,0 +1,33 @@
+% Sample 11
+
+Domain.InputVertex = [ 0 0
+    5 0
+    5 5
+    0 5
+    0.8 1.0
+    2.2 4.1
+    4.1 3.2
+    3.5 1.0
+    2.1 1.0
+    3.0 3.1];
+
+Domain.Boundary.Values = [1 2 3 4] ;
+Domain.Holes.Hole = [];
+Domain.Segments.Segment(1).Values = [5 6 7 8];
+Domain.Segments.Segment(2).Values = [9 10];
+
+BC.Values =  [1 2 3 4];
+BC.Boundary.Values = [1 2 3 4]; 
+BC.Holes.Hole = [];
+BC.Segments.Segment(1).Values = [1 1 1];
+BC.Segments.Segment(2).Values = [1];
+BC.InputVertexValues = ones(length (Domain.InputVertex),1);
+
+RefiningOptions.CheckArea = 'Y';
+RefiningOptions.CheckAngle = 'N';
+RefiningOptions.AreaValue = 0.1;   
+RefiningOptions.AngleValue = 30;   
+RefiningOptions.Subregions = [];
+
+[geom] = btr30(Domain,BC,RefiningOptions);
+BW_draw_grid (geom,1);
