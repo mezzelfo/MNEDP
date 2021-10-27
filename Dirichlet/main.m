@@ -4,14 +4,10 @@ clc
 
 Sample_Square_Dirichlet()
 
-
-
-
-
-epsilon = 1;
-betax = 0;
-betay = 0;
-gamma = 0;
+epsilon = @(x) 1;
+betax = @(x) 0;
+betay = @(x) 0;
+gamma = @(x) 0;
 f = @(P) 32*(P(1)*(1-P(1))+P(2)*(1-P(2)));
 
 [A,b] = assembla(geom,epsilon,betax,betay,gamma,f);
