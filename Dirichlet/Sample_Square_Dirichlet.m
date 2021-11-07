@@ -69,7 +69,7 @@ BC.Segments.Segment = [];
 
 RefiningOptions.CheckArea  = 'Y';
 RefiningOptions.CheckAngle = 'N';
-RefiningOptions.AreaValue  = 0.001;
+RefiningOptions.AreaValue  = 0.01;
 RefiningOptions.AngleValue = [];
 RefiningOptions.Subregions = [];
 

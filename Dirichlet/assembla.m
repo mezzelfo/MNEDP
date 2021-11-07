@@ -1,14 +1,18 @@
-function [A,b] = assembla( ...
+function [A,b,A_dirichlet,u_dirichlet] = assembla( ...
     geom, ...
     epsilon, ...
     betax, ...
     betay, ...
     gamma, ...
-    f)
+    f,...
+    bordo_dirichlet)
 
 ndof = max(geom.pivot.pivot);
+ndirichlet = -min(geom.pivot.pivot);
 A = zeros(ndof,ndof);
 b = zeros(ndof,1);
+A_dirichlet = zeros(ndof,ndirichlet);
+u_dirichlet = zeros(ndirichlet,1);
 
 for e=1:geom.nelements.nTriangles
     points_idx = geom.elements.triangles(e,:);
@@ -26,15 +30,29 @@ for e=1:geom.nelements.nTriangles
         end
         for k = 1:3
             kk = geom.pivot.pivot(points_idx(k));
-            if kk < 0
-                continue
+            if kk > 0
+                A(jj,kk) = A(jj,kk) + ...
+                    epsilon(center)/(4*area)*(d(k,2)*d(j,2)+d(k,1)*d(j,1))+...
+                    1/6*(betax(center)*d(k,2)+betay(center)*d(k,1))+...
+                    gamma(center)*area/12*(1+k==j);
+            else
+                A_dirichlet(jj,-kk) = A_dirichlet(jj,-kk) + ...
+                    epsilon(center)/(4*area)*(d(k,2)*d(j,2)+d(k,1)*d(j,1))+...
+                    1/6*(betax(center)*d(k,2)+betay(center)*d(k,1))+...
+                    gamma(center)*area/12*(1+k==j);
             end
-            A(jj,kk) = A(jj,kk) + ...
-                epsilon(center)/(4*area)*(d(k,2)*d(j,2)+d(k,1)*d(j,1))+...
-                1/6*(betax(center)*d(k,2)+betay(center)*d(k,1))+...
-                gamma(center)*area/12*(1+k==j);
         end
         b(jj) = b(jj) + f(center)/3*area;
     end
 end
+
+for j = 1:length(geom.pivot.Di)
+    j = geom.pivot.Di(j,:);
+    jj = -geom.pivot.pivot(j(1));
+    coords = geom.elements.coordinates(j(1));
+    type = j(2);
+    u_dirichlet(jj) = bordo_dirichlet(coords,type);
+    bordo_dirichlet(coords,type)
+end
+
 end
