@@ -41,6 +41,13 @@ grad_P(2,5,:) = -4*(-1+csi+2*eta);
 grad_P(1,6,:) = -4*(-1+2*csi+eta);
 grad_P(2,6,:) = -4*csi;
 
+csi_1D = [-sqrt(5+2*sqrt(10/7))/3, -sqrt(5-2*sqrt(10/7))/3, 0, sqrt(5-2*sqrt(10/7))/3, sqrt(5+2*sqrt(10/7))/3];
+omega_1D = [(322-13*sqrt(70))/900,(322+13*sqrt(70))/900,128/225,(322+13*sqrt(70))/900,(322-13*sqrt(70))/900];
+
+csi_1D = csi_1D/2+0.5;
+omega_1D = omega_1D/2;
+
+P_1D = [2.*(csi_1D-1).*(csi_1D-0.5); 2.*csi_1D.*(csi_1D-0.5); -4.*csi_1D.*(csi_1D-1)]';
 
 for e=1:geom.nelements.nTriangles
     dof = geom.elements.triangles(e,:);
@@ -53,17 +60,10 @@ for e=1:geom.nelements.nTriangles
     B = [d(1,2) -d(1,1); -d(2,2) d(2,1)];
     BinvTgrad_P = pagemtimes(inv(B)',grad_P);
     gradgrad = pagemtimes(pagetranspose(BinvTgrad_P),BinvTgrad_P);
-       
+    
     pts = coords(:,end)+B*[csi; eta];
     
     betaTgrad = squeeze(sum(reshape(beta(pts),[2,1,7]).*BinvTgrad_P));
-    
-%     mk = 1/3;
-%     h = linspace(0,1);
-%     Pe = mk*norm(beta(center))*h/(2*epsilon(center));
-%     tau = h/(2*norm(beta(center)));
-%     tau(Pe < 1) = mk*h(Pe < 1).^2/(4*epsilon(center));
-%     plot(h,tau);
     
     mk = 1/3;
     h = sqrt(max(sum(d.^2,1)));
@@ -85,37 +85,44 @@ for e=1:geom.nelements.nTriangles
                 contrib_SUPG = contrib_SUPG + 0; %TODO aggiungere ordine 2
                 kk = geom.pivot.pivot(dof(k));
                 if kk > 0
-                   A(jj,kk) = A(jj,kk) + contrib_diff + contrib_conv + contrib_SUPG;
+                    A(jj,kk) = A(jj,kk) + contrib_diff + contrib_conv + contrib_SUPG;
                 else
-                   A_dirichlet(jj,-kk) = A_dirichlet(jj,-kk) + contrib_diff + contrib_conv + contrib_SUPG;
+                    A_dirichlet(jj,-kk) = A_dirichlet(jj,-kk) + contrib_diff + contrib_conv + contrib_SUPG;
                 end
             end
             b(jj) = b(jj) + ...
-               2*area*(omega.*f(pts))*P(:,j) + ...
-               2*area*tau*(omega.*f(pts))*betaTgrad(j,:)';
+                2*area*(omega.*f(pts))*P(:,j) + ...
+                2*area*tau*(omega.*f(pts))*betaTgrad(j,:)';
         end
     end
 end
 
-% for j = 1:length(geom.pivot.Di)
-%     j = geom.pivot.Di(j,:);
-%     jj = -geom.pivot.pivot(j(1));
-%     coords = geom.elements.coordinates(j(1));
-%     marker = j(2);
-%     u_dirichlet(jj) = bordo_dirichlet(coords,marker);
-% end
-% 
-% for e = 1:length(geom.pivot.Ne)
-%     e = geom.pivot.Ne(e,:);
-%     points_idx = geom.elements.borders(e(1),[1,2]);
-%     coords = geom.elements.coordinates(points_idx,:)';
-%     lunghezza = sqrt(sum((coords(:,1)-coords(:,2)).^2));
-%     marker = e(2);
-%     gn = bordo_neumann(coords, marker);
-%     contribs = lunghezza * [[2, 1];[1, 2]]/6 * gn';
-%     jj = geom.pivot.pivot(points_idx);
-%     b_neumann(jj(jj > 0)) = b_neumann(jj(jj > 0)) + contribs(jj > 0);
-% end
+for j = 1:length(geom.pivot.Di)
+    j = geom.pivot.Di(j,:);
+    jj = -geom.pivot.pivot(j(1));
+    coords = geom.elements.coordinates(j(1));
+    u_dirichlet(jj) = bordo_dirichlet(coords,j(2)); %j(2) is marker
+end
+
+
+for e = 1:length(geom.pivot.Ne)
+    e = geom.pivot.Ne(e,:);
+    points_idx = geom.elements.borders(e(1),[1,2,5]); %[start node, end node, middle node]
+    coords = geom.elements.coordinates(points_idx,:)';
+    
+    border_length = norm(coords(:,1)-coords(:,2));
+    
+    %from csi_1D to actual points along border and then get neumann values
+    pts = coords(:,1) + (coords(:,2)-coords(:,1))*csi_1D;
+    gamma_Ne = bordo_neumann(pts, e(2)); %e(2) is marker
+    
+    % Numerical integration of the three basis functions
+    contribs = border_length * (omega_1D .* gamma_Ne) * P_1D;
+    
+    % Accumulate
+    jj = geom.pivot.pivot(points_idx);
+    b_neumann(jj(jj > 0)) = b_neumann(jj(jj > 0)) + contribs(jj > 0)';
+end
 
 
 end

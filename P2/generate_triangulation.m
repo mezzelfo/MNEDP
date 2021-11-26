@@ -56,7 +56,7 @@ BC.Values = [0.0 12.0 0.0 14.0 0.0 16.0 0.0 0.0 0.0];
 
 % marker delle condizioni al contorno sui bordi del dominio
 % dispari -> Dirichlet; pari -> Neumann
-BC.Boundary.Values = [3 5 7 9];
+BC.Boundary.Values = [3 4 7 9];
 % marker dei Vertici iniziali
 BC.InputVertexValues = [1 1 1 1];
 % Questi indici posso essere anche indici ai valori numerici

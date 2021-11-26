@@ -4,14 +4,14 @@ clear all
 
 global geom
 
-true_sol_handle = @(P) 0+16*P(1,:).*(1-P(1,:)).*P(2,:).*(1-P(2,:));
+true_sol_handle = @(P) 5+16*P(1,:).*(1-P(1,:)).*P(2,:).*(1-P(2,:));
 grad_true_sol_handle = @(P) [   16*P(2,:).*(1-P(2,:)).*(1-2*P(1,:)); 
                                 16*P(1,:).*(1-P(1,:)).*(1-2*P(2,:))];
 
 epsilon = @(x) x(1,:)*0+1;
 beta = @(x) x*0+[0;0];
 f = @(P) 32*(P(1,:).*(1-P(1,:))+P(2,:).*(1-P(2,:)));% + dot(beta(P), grad_true_sol_handle(P));
-bordo_dirichlet = @(P, marker) 0;
+bordo_dirichlet = @(P, marker) 5;
 bordo_neumann = @(P, marker) -16*(P(2,:)-P(2,:).^2);
 
 
@@ -21,11 +21,11 @@ errors_ax = 0*area_ax;
 tic
 for i = 1:length(area_ax)
     
-    %filename = append('../Triangolazioni/triangolazione_',num2str(area_ax(i)),'.mat');
-    generate_triangulation(area_ax(i));
-    prepP2();
+    filename = append('../Triangolazioni/triangolazione_',num2str(area_ax(i)),'.mat');
+    %generate_triangulation(area_ax(i));
     %save(filename,'geom')
-    %load(filename);
+    load(filename);
+    prepP2();
         
     [A,b,A_dirichlet,u_dirichlet,b_neumann] = assembla(epsilon,beta,f, bordo_dirichlet, bordo_neumann);
     u = A\(b-A_dirichlet*u_dirichlet+b_neumann);

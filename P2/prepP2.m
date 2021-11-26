@@ -7,7 +7,13 @@ for b = 1:geom.nelements.nBorders
     nVertexes = nVertexes+1;
     idx_vertices = geom.elements.borders(b,1:2);
     idx_elements = geom.elements.borders(b,3:4);
-
+    
+    %Add new node's coordinates
+    geom.elements.coordinates(nVertexes,:) = mean(geom.elements.coordinates(idx_vertices,:));
+    
+    %Add new node to the border
+    geom.elements.borders(b,5)=nVertexes;
+    
     %Add new node to adjacent triangles
     for element = idx_elements
         if(element ~= -1)
@@ -17,7 +23,7 @@ for b = 1:geom.nelements.nBorders
             geom.elements.triangles(element,pos) = nVertexes;
         end
     end
-
+    
     %Get correct marker for the new node
     edge_marker = geom.support.BInfo(b,3);
     if mod(edge_marker, 2) == 0
@@ -30,7 +36,5 @@ for b = 1:geom.nelements.nBorders
         geom.pivot.Di(end+1,:) = [nVertexes, edge_marker];
         geom.pivot.pivot(nVertexes) = min(geom.pivot.pivot)-1;
     end
-    
-    %TODO: add new coord in geom.elements.coordinates
 end
 end
