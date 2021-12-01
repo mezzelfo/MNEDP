@@ -1,27 +1,31 @@
-function [tot_err_inf, tot_err_L2, tot_err_H1] = calcola_errore_priori(true_sol_handle, grad_true_sol_handle, sol)
+function [tot_err_inf, tot_err_L2, tot_err_H1] = calcola_errore_priori(true_sol_handle, grad_true_sol_handle, sol, Pk)
 global geom
 [zita,csi,eta,omega] = int_nodes_weights(5); %TODO: da rendere globale
 % Calcoliamo una volta per tutte le funzioni di base su tutti i punti
 % della quadratura sul triangolo di riferimento
 
-%%P1
-%P = [csi; eta; zita]';
-%grad_P = [[1 0];[0 1];[-1 -1]]';
-%grad_P = repmat(grad_P,1,1,length(omega));
-
-%%P2
-P = [2.*csi.*(csi-0.5);2.*eta.*(eta-0.5);2.*zita.*(zita-0.5);4*csi.*eta;4.*eta.*zita;4.*csi.*zita]';
-grad_P = zeros(2,6,7);
-grad_P(1,1,:) = -1+4*csi;
-grad_P(2,2,:) = -1+4*eta;
-grad_P(1,3,:) = -3+4*csi+4*eta;
-grad_P(2,3,:) = -3+4*csi+4*eta;
-grad_P(1,4,:) = 4*eta;
-grad_P(2,4,:) = 4*csi;
-grad_P(1,5,:) = -4*eta;
-grad_P(2,5,:) = -4*(-1+csi+2*eta);
-grad_P(1,6,:) = -4*(-1+2*csi+eta);
-grad_P(2,6,:) = -4*csi;
+switch Pk
+    case 'P1'
+        P = [csi; eta; zita]';
+        grad_P = [[1 0];[0 1];[-1 -1]]';
+        grad_P = repmat(grad_P,1,1,length(omega));
+        
+    case 'P2'
+        P = [2.*csi.*(csi-0.5);2.*eta.*(eta-0.5);2.*zita.*(zita-0.5);4*csi.*eta;4.*eta.*zita;4.*csi.*zita]';
+        grad_P = zeros(2,6,7);
+        grad_P(1,1,:) = -1+4*csi;
+        grad_P(2,2,:) = -1+4*eta;
+        grad_P(1,3,:) = -3+4*csi+4*eta;
+        grad_P(2,3,:) = -3+4*csi+4*eta;
+        grad_P(1,4,:) = 4*eta;
+        grad_P(2,4,:) = 4*csi;
+        grad_P(1,5,:) = -4*eta;
+        grad_P(2,5,:) = -4*(-1+csi+2*eta);
+        grad_P(1,6,:) = -4*(-1+2*csi+eta);
+        grad_P(2,6,:) = -4*csi;
+    otherwise
+        error('Pk only implemented with P1 or P2');
+end
 
 tot_err_L2 = 0;
 tot_err_H1 = 0;
