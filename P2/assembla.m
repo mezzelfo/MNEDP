@@ -31,32 +31,32 @@ omega_1D = omega_1D/2;
 
 switch Pk
     case 'P1'
-        P = [csi; eta; zita]';
-        grad_P = [[1 0];[0 1];[-1 -1]]';
-        grad_P = repmat(grad_P,1,1,length(omega));
-        hessian_P = zeros(2,2,3);
+        phi = [csi; eta; zita]';
+        grad_phi = [[1 0];[0 1];[-1 -1]]';
+        grad_phi = repmat(grad_phi,1,1,length(omega));
+        hessian_phi = zeros(2,2,3);
         P_1D = [1-csi_1D; csi_1D]'; %TODO: check order
         mk = 1/3; %FOR SUPG
     case 'P2'
-        P = [2.*csi.*(csi-0.5);2.*eta.*(eta-0.5);2.*zita.*(zita-0.5);4*csi.*eta;4.*eta.*zita;4.*csi.*zita]';
-        grad_P = zeros(2,6,7);
-        grad_P(1,1,:) = -1+4*csi;
-        grad_P(2,2,:) = -1+4*eta;
-        grad_P(1,3,:) = -3+4*csi+4*eta;
-        grad_P(2,3,:) = -3+4*csi+4*eta;
-        grad_P(1,4,:) = 4*eta;
-        grad_P(2,4,:) = 4*csi;
-        grad_P(1,5,:) = -4*eta;
-        grad_P(2,5,:) = -4*(-1+csi+2*eta);
-        grad_P(1,6,:) = -4*(-1+2*csi+eta);
-        grad_P(2,6,:) = -4*csi;
-        hessian_P = zeros(2,2,6); %Constant so no need for fourth dimension
-        hessian_P(:,:,1) = [4 0;0 0];
-        hessian_P(:,:,2) = [0 0;0 4];
-        hessian_P(:,:,3) = [4 4;4 4];
-        hessian_P(:,:,4) = [0 4;4 0];
-        hessian_P(:,:,5) = [0 -4;-4 -8];
-        hessian_P(:,:,6) = [-8 -4;-4 0];
+        phi = [2.*csi.*(csi-0.5);2.*eta.*(eta-0.5);2.*zita.*(zita-0.5);4*csi.*eta;4.*eta.*zita;4.*csi.*zita]';
+        grad_phi = zeros(2,6,7);
+        grad_phi(1,1,:) = -1+4*csi;
+        grad_phi(2,2,:) = -1+4*eta;
+        grad_phi(1,3,:) = -3+4*csi+4*eta;
+        grad_phi(2,3,:) = -3+4*csi+4*eta;
+        grad_phi(1,4,:) = 4*eta;
+        grad_phi(2,4,:) = 4*csi;
+        grad_phi(1,5,:) = -4*eta;
+        grad_phi(2,5,:) = -4*(-1+csi+2*eta);
+        grad_phi(1,6,:) = -4*(-1+2*csi+eta);
+        grad_phi(2,6,:) = -4*csi;
+        hessian_phi = zeros(2,2,6); %Constant so no need for fourth dimension
+        hessian_phi(:,:,1) = [4 0;0 0];
+        hessian_phi(:,:,2) = [0 0;0 4];
+        hessian_phi(:,:,3) = [4 4;4 4];
+        hessian_phi(:,:,4) = [0 4;4 0];
+        hessian_phi(:,:,5) = [0 -4;-4 -8];
+        hessian_phi(:,:,6) = [-8 -4;-4 0];
         P_1D = [2.*(csi_1D-1).*(csi_1D-0.5); 2.*csi_1D.*(csi_1D-0.5); -4.*csi_1D.*(csi_1D-1)]';
         mk = 1/24; %FOR SUPG
     otherwise
@@ -74,15 +74,15 @@ for e=1:geom.nelements.nTriangles
     
     B = [d(1,2) -d(1,1); -d(2,2) d(2,1)];
     invB = inv(B);
-    BinvTgrad_P = pagemtimes(invB',grad_P);
-    gradgrad = pagemtimes(pagetranspose(BinvTgrad_P),BinvTgrad_P);
+    BinvTgrad_phi = pagemtimes(invB',grad_phi);
+    gradgrad = pagemtimes(pagetranspose(BinvTgrad_phi),BinvTgrad_phi);
     
     pts = coords(:,end)+B*[csi; eta];
     epsilonpts = epsilon(pts);
     betapts = beta(pts);
     fpts = f(pts);
     
-    betaTgrad = squeeze(sum(reshape(betapts,[2,1,7]).*BinvTgrad_P));
+    betaTgrad = squeeze(sum(reshape(betapts,[2,1,7]).*BinvTgrad_phi));
     
     h = sqrt(max(sum(d.^2,1)));
     Pe = mk*norm(beta(center))*h/(2*epsilon(center));
@@ -96,14 +96,14 @@ for e=1:geom.nelements.nTriangles
     end
     
     contrib_diff_tot = 2*area*squeeze(pagemtimes(omega .* epsilonpts, permute(gradgrad,[3,1,2])));
-    contrib_conv_tot = 2*area*(omega.*betaTgrad) * P;
+    contrib_conv_tot = 2*area*(omega.*betaTgrad) * phi;
     
-    local_laplacian = sum((invB*invB').*hessian_P,[1,2]);
+    local_laplacian = sum((invB*invB').*hessian_phi,[1,2]);
     
-    for j=1:size(P,2)
+    for j=1:size(phi,2)
         jj = geom.pivot.pivot(dof(j));
         if jj > 0
-            for k = 1:size(P,2)
+            for k = 1:size(phi,2)
                 %                 contrib_diff = 2*area*(omega .* epsilonpts) * squeeze(gradgrad(k,j,:));
                 %                 contrib_conv = 2*area*(omega .* squeeze(betaTgrad(k,:))) * P(:,j);
                 contrib_diff = contrib_diff_tot(k,j);
@@ -118,7 +118,7 @@ for e=1:geom.nelements.nTriangles
                 end
             end
             b(jj) = b(jj) + ...
-                2*area*(omega.*fpts)*P(:,j) + ...
+                2*area*(omega.*fpts)*phi(:,j) + ...
                 2*area*tau*(omega.*fpts)*betaTgrad(j,:)';
         end
     end
