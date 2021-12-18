@@ -1,15 +1,21 @@
-function [A,b,A_dirichlet,u_dirichlet,b_neumann] = assemblaEllittico(Pk,SUPG,MassLumping)
+function [A,b,A_dirichlet,u_dirichlet,b_neumann,mat_massa,mat_massa_dirichlet] = assemblaEllittico(Pk,SUPG,MassLumping,massa)
 global problem
 global geom
 
 ndof = max(geom.pivot.pivot);
+ndirichlet = -min(geom.pivot.pivot);
 
 A = spalloc(ndof,ndof, 10*ndof);
 b = zeros(ndof,1);
+mat_massa = spalloc(ndof,ndof,10*ndof);
 
-ndirichlet = -min(geom.pivot.pivot);
+if ~massa
+    problem.rho = @(x) 0;
+end
+
 A_dirichlet = spalloc(ndof,ndirichlet, 10*ndof);
 u_dirichlet = zeros(ndirichlet,1);
+mat_massa_dirichlet = spalloc(ndof,ndirichlet,10*ndof);
 
 b_neumann = zeros(ndof,1);
 
@@ -29,7 +35,7 @@ switch Pk
         grad_phi = repmat(grad_phi,1,1,length(omega));
         hessian_phi = zeros(2,2,3);
         P_1D = [1-csi_1D; csi_1D];
-        mk = 1/3; %FOR SUPG
+        mk = 1/3; % per SUPG
     case 'P2'
         phi = [2.*csi.*(csi-0.5);2.*eta.*(eta-0.5);2.*zita.*(zita-0.5);4*csi.*eta;4.*eta.*zita;4.*csi.*zita];
         grad_phi = zeros(2,6,7);
@@ -51,9 +57,9 @@ switch Pk
         hessian_phi(:,:,5) = [0 -4;-4 -8];
         hessian_phi(:,:,6) = [-8 -4;-4 0];
         P_1D = [2.*(csi_1D-1).*(csi_1D-0.5); 2.*csi_1D.*(csi_1D-0.5); -4.*csi_1D.*(csi_1D-1)];
-        mk = 1/24; %FOR SUPG
+        mk = 1/24; % per SUPG
     otherwise
-        error('Pk only implemented with P1 or P2');
+        error('Funzione implementata solo per P1 e P2');
 end
 
 
@@ -93,13 +99,14 @@ for e=1:geom.nelements.nTriangles
     
     contrib_diff_tot = 2*area*squeeze(pagemtimes(omega .* epsilonpts, permute(gradgrad,[3,1,2])));
     contrib_conv_tot = 2*area*(omega.*betaTgrad) * phi';
-    
+
+    contrib_reaz_tot = 2*area*squeeze(pagemtimes(omega.*sigmapts, permute(phiphi,[3,1,2])));
     if MassLumping
-        %TODO
-    else
-        contrib_reaz_tot = 2*area*squeeze(pagemtimes(omega.*sigmapts, permute(phiphi,[3,1,2])));
+        contrib_reaz_tot = diag(sum(contrib_reaz_tot,1));
     end
     
+    contrib_massa_tot = 2*area*squeeze(pagemtimes(omega.*problem.rho(pts), permute(phiphi,[3,1,2])));
+
     local_laplacian = sum((invB*invB').*hessian_phi,[1,2]);
     
     for j=1:length(dof)
@@ -109,14 +116,17 @@ for e=1:geom.nelements.nTriangles
                 contrib_diff = contrib_diff_tot(k,j);
                 contrib_conv = contrib_conv_tot(k,j);
                 contrib_reaz = contrib_reaz_tot(k,j);
+                contrib_massa = contrib_massa_tot(k,j);
 
                 contrib_SUPG = 2*area*tau*omega * (betaTgrad(k,:) .* betaTgrad(j,:))';
                 contrib_SUPG = contrib_SUPG + 2*area*tau*omega*(local_laplacian(k) * betaTgrad(j,:).*epsilonpts)';
                 kk = geom.pivot.pivot(dof(k));
                 if kk > 0
                     A(jj,kk) = A(jj,kk) + contrib_diff + contrib_conv + contrib_reaz + contrib_SUPG;
+                    mat_massa(jj,kk) = mat_massa(jj,kk) + contrib_massa;
                 else
                     A_dirichlet(jj,-kk) = A_dirichlet(jj,-kk) + contrib_diff + contrib_conv + contrib_reaz + contrib_SUPG;
+                    mat_massa_dirichlet(jj,-kk) = mat_massa_dirichlet(jj,-kk) + contrib_massa;
                 end
             end
             b(jj) = b(jj) + ...

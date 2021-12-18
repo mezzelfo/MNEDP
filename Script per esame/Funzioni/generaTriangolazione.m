@@ -2,8 +2,8 @@ function [] = generaTriangolazione(area, InputVertex, BoundaryValues, nomeFile)
 global geom
 
 if(~exist('bbtr30'))
-     addpath('../../Triangolatore/Long/bbtr30')
-     disp('../../Triangolatore/Long/bbtr30 added to the path')
+     addpath('../Triangolatore/Long/bbtr30')
+     disp('../Triangolatore/Long/bbtr30 added to the path')
 end
 
 %----------------------------------------------------------------------------
@@ -128,7 +128,7 @@ geom.pivot.Di = geom.pivot.Di(I,:);
 
 
 if nargin == 4 %Voglio salvare la triangolazione
-    filename = append('../Triangolazioni/',nomeFile,'/',num2str(area),'.mat');
+    filename = append('Triangolazioni/',nomeFile,'/',num2str(area),'.mat');
     save(filename,'geom')
 end
 
