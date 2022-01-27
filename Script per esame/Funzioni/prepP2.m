@@ -5,8 +5,8 @@ nVertexes = geom.nelements.nVertexes;
 
 for b = 1:geom.nelements.nBorders
     nVertexes = nVertexes+1;
-    idx_vertices = geom.elements.borders(b,1:2);
-    idx_elements = geom.elements.borders(b,3:4);
+    idx_vertices = geom.elements.borders(b,1:2); % Vertici adiacenti
+    idx_elements = geom.elements.borders(b,3:4); % Triangoli adiacenti
     
     %Add new node's coordinates
     geom.elements.coordinates(nVertexes,:) = mean(geom.elements.coordinates(idx_vertices,:));

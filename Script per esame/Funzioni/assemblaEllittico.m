@@ -3,7 +3,7 @@ global problem
 global geom
 
 ndof = max(geom.pivot.pivot);
-ndirichlet = -min(geom.pivot.pivot);
+ndirichlet = max(-min(geom.pivot.pivot),0);
 
 A = spalloc(ndof,ndof, 10*ndof);
 b = zeros(ndof,1);
@@ -49,7 +49,7 @@ switch Pk
         grad_phi(2,5,:) = -4*(-1+csi+2*eta);
         grad_phi(1,6,:) = -4*(-1+2*csi+eta);
         grad_phi(2,6,:) = -4*csi;
-        hessian_phi = zeros(2,2,6); %Constant so no need for fourth dimension
+        hessian_phi = zeros(2,2,6); %Constant so no need fourth dimension
         hessian_phi(:,:,1) = [4 0;0 0];
         hessian_phi(:,:,2) = [0 0;0 4];
         hessian_phi(:,:,3) = [4 4;4 4];
@@ -101,31 +101,31 @@ for e=1:geom.nelements.nTriangles
     contrib_conv_tot = 2*area*(omega.*betaTgrad) * phi';
 
     contrib_reaz_tot = 2*area*squeeze(pagemtimes(omega.*sigmapts, permute(phiphi,[3,1,2])));
+    contrib_massa_tot = 2*area*squeeze(pagemtimes(omega.*problem.rho(pts), permute(phiphi,[3,1,2])));
     if MassLumping
         contrib_reaz_tot = diag(sum(contrib_reaz_tot,1));
+        contrib_massa_tot = diag(sum(contrib_massa_tot,1));
     end
-    
-    contrib_massa_tot = 2*area*squeeze(pagemtimes(omega.*problem.rho(pts), permute(phiphi,[3,1,2])));
 
+    contrib_rigid_tot = contrib_diff_tot + contrib_conv_tot + contrib_reaz_tot;
+    
     local_laplacian = sum((invB*invB').*hessian_phi,[1,2]);
     
     for j=1:length(dof)
         jj = geom.pivot.pivot(dof(j));
         if jj > 0
             for k = 1:length(dof)
-                contrib_diff = contrib_diff_tot(k,j);
-                contrib_conv = contrib_conv_tot(k,j);
-                contrib_reaz = contrib_reaz_tot(k,j);
+                contrib_rigid = contrib_rigid_tot(k,j);
                 contrib_massa = contrib_massa_tot(k,j);
 
                 contrib_SUPG = 2*area*tau*omega * (betaTgrad(k,:) .* betaTgrad(j,:))';
                 contrib_SUPG = contrib_SUPG + 2*area*tau*omega*(local_laplacian(k) * betaTgrad(j,:).*epsilonpts)';
                 kk = geom.pivot.pivot(dof(k));
                 if kk > 0
-                    A(jj,kk) = A(jj,kk) + contrib_diff + contrib_conv + contrib_reaz + contrib_SUPG;
+                    A(jj,kk) = A(jj,kk) + contrib_rigid + contrib_SUPG;
                     mat_massa(jj,kk) = mat_massa(jj,kk) + contrib_massa;
                 else
-                    A_dirichlet(jj,-kk) = A_dirichlet(jj,-kk) + contrib_diff + contrib_conv + contrib_reaz + contrib_SUPG;
+                    A_dirichlet(jj,-kk) = A_dirichlet(jj,-kk) + contrib_rigid + contrib_SUPG;
                     mat_massa_dirichlet(jj,-kk) = mat_massa_dirichlet(jj,-kk) + contrib_massa;
                 end
             end

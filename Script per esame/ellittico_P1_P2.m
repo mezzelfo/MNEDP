@@ -2,10 +2,11 @@ clear all
 close all
 clc
 if(~exist('assemblaEllittico'))
-     addpath('Funzioni')
+    addpath('Funzioni')
 end
 
 %%
+
 global problem
 true_sol_handle = @(x) sin(3*x(1,:)).*cos(4*x(2,:));
 grad_true_sol_handle = @(x) [3*cos(3*x(1,:)).*cos(4*x(2,:)); -4*sin(3*x(1,:)).*sin(4*x(2,:))];
@@ -36,7 +37,7 @@ problem.bordo_neumann = @(x, marker) 3*cos(3*x(1,:)).*cos(4*x(2,:));
     true_sol_handle,grad_true_sol_handle,...
     'QuadratoMisto'...
     );
-
+%%
 loglog(h_ax,errors_ax_P1(:,2),'-o',h_ax,errors_ax_P2(:,2),'-o')
 legend('P1','P2');
 
@@ -48,3 +49,9 @@ polyfit(log(h_ax), log(errors_ax_P2(:,1)),1)
 polyfit(log(h_ax), log(errors_ax_P2(:,2)),1)
 polyfit(log(h_ax), log(errors_ax_P2(:,3)),1)
 
+%% Export to LATEX
+%writematrix([h_ax', errors_ax_P1, errors_ax_P2],'analisi_P1_P2.csv')
+%data = readmatrix('analisi_P1_P2.csv');
+%h_ax = data(:,1);
+%errors_ax_P1 = data(:,2:4);
+%errors_ax_P2 = data(:,5:7);

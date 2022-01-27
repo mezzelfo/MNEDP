@@ -6,7 +6,7 @@ function [h_ax,errors_ax] = convergenzaErrorePriori(...
 global geom
 
 area_ax = logspace(log10(0.1), log10(0.0001));
-area_ax = area_ax(5:end);
+%area_ax = area_ax(10:30);
 h_ax = sqrt(area_ax);
 errors_ax = zeros(length(area_ax),3);
 for i = 1:length(area_ax)

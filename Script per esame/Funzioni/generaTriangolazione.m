@@ -1,4 +1,4 @@
-function [] = generaTriangolazione(area, InputVertex, BoundaryValues, nomeFile)
+function [] = generaTriangolazione(area, InputVertex, InputVertexValues, BoundaryValues, nomeFile)
 global geom
 
 if(~exist('bbtr30'))
@@ -48,19 +48,19 @@ Domain.Segments.Segment = []; % non ci sono lati forzati nel dominio
 % --------------------------------------------------
 
 % valori numerici per le condizioni al contorno
-BC.Values = [0.0 12.0 0.0 14.0 0.0 16.0 0.0 0.0 0.0];
+%BC.Values = [0.0 12.0 0.0 14.0 0.0 16.0 0.0 0.0 0.0];
+BC.Values = NaN; %LUCA: We do not use this;
 
 % marker delle condizioni al contorno sui bordi del dominio
 % dispari -> Dirichlet; pari -> Neumann
 BC.Boundary.Values = BoundaryValues;
 % marker dei Vertici iniziali
-BC.InputVertexValues = ones(1,length(InputVertex));
+BC.InputVertexValues = InputVertexValues;
 % Questi indici posso essere anche indici ai valori numerici
 % contenuti nel vettore BC.Values
 
 BC.Holes.Hole = [];
 BC.Segments.Segment = [];
-
 
 
 % --------------------------------------------
@@ -127,7 +127,7 @@ geom.pivot.pivot = transpose(geom.pivot.pivot);
 geom.pivot.Di = geom.pivot.Di(I,:);
 
 
-if nargin == 4 %Voglio salvare la triangolazione
+if nargin == 5 %Voglio salvare la triangolazione
     filename = append('Triangolazioni/',nomeFile,'/',num2str(area),'.mat');
     save(filename,'geom')
 end

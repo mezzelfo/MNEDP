@@ -2,19 +2,22 @@ clear all
 close all
 clc
 if(~exist('assemblaEllittico'))
-     addpath('Funzioni')
+    addpath('Funzioni')
 end
 
+%QuadratoMisto
+InputVertex = [0 0; 1 0; 1 1; 0 1];
+InputVertexValues = [1 1 1 1];
+BoundaryValues = [3 4 5 7];
 
-%InputVertex = [0 0; 1 0; 0.3 0.5; 1 1; 0 1];
-%BoundaryValues = 0*InputVertex+1;
+% %NonConvesso
+% InputVertex = [0 0; 0 -1; 1 -1; 1 0; 1 1; 0 1; -1 1; -1 0];
+% BoundaryValues = [1 1 1 1 1 1 1 1];
+% InputVertexValues = [1 1 1 1 1 1 1 1];
 
-InputVertex = [0 0; 0.57 0.15; 1 0; 0.74 0.5; 1 1; 0.54 0.83; 0 1; 0.18 0.52];
-BoundaryValues = 0*InputVertex+1;
 
 
 area_ax = logspace(log10(0.1), log10(0.0001));
-%area_ax = area_ax(1:10:end);
 for i = 1:length(area_ax)
-    generaTriangolazione(area_ax(i),InputVertex,BoundaryValues,'Prova')
+    generaTriangolazione(area_ax(i),InputVertex,InputVertexValues,BoundaryValues,'QuadratoMisto')
 end
