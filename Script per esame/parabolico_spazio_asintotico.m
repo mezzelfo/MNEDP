@@ -9,22 +9,22 @@ global geom
 global problem
 
 % Parametri per i P1
-% Pk = 'P1';
-% n_steps = 10;
-% T = 4;
-
-% Parametri per i P2
-Pk = 'P2';
-n_steps = 10;
+Pk = 'P1';
+n_steps = 20;
 T = 4;
 
-true_sol_handle = @(x,t) 100*exp(-t).*(x(1,:).^2+x(2,:).^2);
+% Parametri per i P2
+% Pk = 'P2';
+% n_steps = 20;
+% T = 4;
+
+true_sol_handle = @(x,t) 100*exp(-t).*(x(1,:).^2+x(2,:).^2).*cos(x(1,:));
 problem.epsilon = @(x) x(1,:)*0+1;
 problem.beta = @(x) 0*x;
 problem.sigma = @(x) 0*x(1,:);
-problem.f = @(x,t) -100*exp(-t).*(4+x(1,:).^2+x(2,:).^2);
+problem.f = @(x,t) -400*exp(-t).*cos(x(1,:))+400*exp(-t).*x(1,:).*sin(x(1,:));
 problem.bordo_dirichlet = @(x,t, marker) true_sol_handle(x,t);
-problem.bordo_neumann = @(x,t, marker) 100*2*exp(-t).*x(1,:);
+problem.bordo_neumann = @(x,t, marker) 200*exp(-t).*x(1,:).*cos(x(1,:))-100*exp(-t).*(x(1,:).^2+x(2,:).^2).*sin(x(1,:));
 problem.rho = @(x) 0*x(1,:) + 1;
 problem.iniziale = @(x) true_sol_handle(x,0);
 
@@ -32,7 +32,7 @@ problem.iniziale = @(x) true_sol_handle(x,0);
 %% Calcola errori
 
 area_ax = logspace(log10(0.1), log10(0.0001));
-%area_ax = area_ax(1:5:end);
+%area_ax = area_ax(1:10:end);
 
 errori = [];
 
@@ -58,10 +58,10 @@ end
 polyfit(log(sqrt(area_ax)),log(errori),1)
 
 %% Export to LATEX
-%writematrix([sqrt(area_ax);errori]',"parabolico_convergenza_spazio_"+Pk+".csv")
+writematrix([sqrt(area_ax);errori]',"parabolico_convergenza_spazio_"+Pk+".csv")
 
 %%
-plot(log(sqrt(area_ax)),log(errori),'-o')
-xlabel("log(h)")
+loglog(sqrt(area_ax),errori,'-o')
+xlabel("h")
 ylabel("errore L2")
 title("Convergenza errore L2 al variare di h per delta t = "+num2str(T/n_steps)+" con "+Pk)

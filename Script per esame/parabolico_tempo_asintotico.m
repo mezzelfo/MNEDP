@@ -9,27 +9,25 @@ global geom
 global problem
 
 % Parametri per i P1
-Pk = 'P1';
-%area = 0.001;
-area = 0.0001;
-T = 4;
-
-% Parametri per i P2
-% Pk = 'P2';
+% Pk = 'P1';
 % area = 0.001;
 % T = 4;
+
+% Parametri per i P2
+Pk = 'P2';
+area = 0.001;
+T = 4;
 
 % Genera una triangolazione con h piccolo
 generaTriangolazione(area, [0 0;1 0;1 1;0 1], [1 1 1 1], [1 2 1 1])
 
-true_sol_handle = @(x,t) 100*exp(-t).*(x(1,:).^2+x(2,:).^2);
-
+true_sol_handle = @(x,t) 100*exp(-t).*(x(1,:).^2+x(2,:).^2).*cos(x(1,:));
 problem.epsilon = @(x) x(1,:)*0+1;
 problem.beta = @(x) 0*x;
 problem.sigma = @(x) 0*x(1,:);
-problem.f = @(x,t) -100*exp(-t).*(4+x(1,:).^2+x(2,:).^2);
+problem.f = @(x,t) -400*exp(-t).*cos(x(1,:))+400*exp(-t).*x(1,:).*sin(x(1,:));
 problem.bordo_dirichlet = @(x,t, marker) true_sol_handle(x,t);
-problem.bordo_neumann = @(x,t, marker) 100*2*exp(-t).*x(1,:);
+problem.bordo_neumann = @(x,t, marker) 200*exp(-t).*x(1,:).*cos(x(1,:))-100*exp(-t).*(x(1,:).^2+x(2,:).^2).*sin(x(1,:));
 problem.rho = @(x) 0*x(1,:) + 1;
 problem.iniziale = @(x) true_sol_handle(x,0);
 
@@ -47,7 +45,7 @@ end
 
 tic
 for n_steps = n_steps_ax
-    n_steps
+    find(n_steps == n_steps_ax)
     [u,uD] = assemblaParabolico(Pk,T,n_steps,false,false,false);
     
     % Assembla la soluzione
@@ -72,9 +70,7 @@ toc
 polyfit(log(T./n_steps_ax),log(errori),1)
 
 %%
-loglog(T./n_steps_ax,errori,'o')
-%%
-%writematrix([T./n_steps_ax;errori]',"parabolico_convergenza_tempo_"+Pk+".csv")
+writematrix([T./n_steps_ax;errori]',"parabolico_convergenza_tempo_"+Pk+".csv")
 
 %%
 % trisurf(geom.elements.triangles(:,1:3),...
@@ -83,11 +79,11 @@ loglog(T./n_steps_ax,errori,'o')
 % utilde(:,end))
 
 %%
-% figure(1)
-% plot(log(T./n_steps_ax),log(errori),'o-')
-% xlabel("log(delta t)")
-% ylabel("errore L2")
-% title("Convergenza errore L2 al variare di delta t per h = "+num2str(sqrt(area))+" con "+Pk)
+figure(1)
+loglog(T./n_steps_ax,errori,'o-')
+xlabel("delta t")
+ylabel("errore L2")
+title("Convergenza errore L2 al variare di delta t per h = "+num2str(sqrt(area))+" con "+Pk)
 % 
 % %%
 % clear all
